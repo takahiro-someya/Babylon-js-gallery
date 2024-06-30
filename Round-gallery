@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Circular Gallery</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; }
+  #renderCanvas { width: 100%; height: 100%; touch-action: none; }
+</style>
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
+  const canvas = document.getElementById("renderCanvas");
+  const engine = new BABYLON.Engine(canvas, true);
+
+  const createScene = () => {
+    const scene = new BABYLON.Scene(engine);
+    const camera = new BABYLON.ArcRotateCamera("camera", 
+        -Math.PI / 2, Math.PI / 4, 20, BABYLON.Vector3.Zero(), scene);
+    camera.attachControl(canvas, true);
+    const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+    // 外壁 (円筒)
+    const outerWall = BABYLON.MeshBuilder.CreateCylinder("outerWall", 
+        { height: 6, diameter: 20, tessellation: 64 }, scene);
+    outerWall.material = new BABYLON.StandardMaterial("outerWallMat", scene);
+    outerWall.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+
+    // 通路 (円筒、少し内側に)
+    const pathway = BABYLON.MeshBuilder.CreateCylinder("pathway", 
+        { height: 6, diameter: 16, tessellation: 64 }, scene);
+    pathway.material = new BABYLON.StandardMaterial("pathwayMat", scene);
+    pathway.material.diffuseColor = new BABYLON.Color3(0.6, 0.4, 0.2); // 木材風
+
+    // ガラス (円筒、さらに内側、少し背を低く)
+    const glassWall = BABYLON.MeshBuilder.CreateCylinder("glassWall", 
+        { height: 5, diameter: 14, tessellation: 64 }, scene);
+    const glassMat = new BABYLON.StandardMaterial("glassMat", scene);
+    glassMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+    glassMat.alpha = 0.5; // 半透明
+    glassWall.material = glassMat;
+
+    // 中庭 (円筒、一番内側)
+    const courtyard = BABYLON.MeshBuilder.CreateCylinder("courtyard", 
+        { height: 1, diameter: 12, tessellation: 64 }, scene);
+    courtyard.material = new BABYLON.StandardMaterial("courtyardMat", scene);
+    courtyard.material.diffuseColor = new BABYLON.Color3(0.3, 0.5, 0.3); // 芝生風
+
+    // アートワーク配置 (例)
+    const artworkCount = 12;
+    const artworkSpacing = 360 / artworkCount;
+
+    for (let i = 0; i < artworkCount; i++) {
+      const angle = BABYLON.Tools.ToRadians(i * artworkSpacing);
+      const x = Math.cos(angle) * 9; // 外壁から少し内側に
+      const z = Math.sin(angle) * 9;
+
+      const artwork = BABYLON.MeshBuilder.CreatePlane("artwork", 
+          { width: 3, height: 2 }, scene);
+      artwork.position.set(x, 2.5, z); // 壁面から少し上に
+      artwork.rotation.y = angle + Math.PI / 2; // 内側に向ける
+
+      const artworkMat = new BABYLON.StandardMaterial("artworkMat", scene);
+      artworkMat.diffuseTexture = new BABYLON.Texture(`path/to/image${i + 1}.jpg`, scene); // 画像は適宜差し替え
+      artwork.material = artworkMat;
+    }
+
+    return scene;
+  };
+
+  const scene = createScene();
+  engine.runRenderLoop(() => scene.render());
+  window.addEventListener("resize", () => engine.resize());
+</script>
+</body>
+</html>
